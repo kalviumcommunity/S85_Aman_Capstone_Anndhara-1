@@ -58,7 +58,7 @@ const cropSchema = new mongoose.Schema({
 
 // Virtual for full image URL
 cropSchema.virtual('fullImageUrl').get(function() {
-    return this.imageUrl ? `${process.env.BACKEND_URL || 'http://localhost:9001'}${this.imageUrl}` : null;
+    return this.imageUrl ? `${process.env.BACKEND_URL || 'https://s85-aman-capstone-anndhara-1-8beh.onrender.com'}${this.imageUrl}` : null;
 });
 
 module.exports = mongoose.model('Crop', cropSchema);

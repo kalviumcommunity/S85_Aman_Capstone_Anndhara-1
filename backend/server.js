@@ -12,7 +12,7 @@ const Notification = require('./model/Notification');
 
 const app = express();
 const server = http.createServer(app);
-
+  
 const io = new Server(server, {
   cors: {
     origin: [
@@ -20,6 +20,7 @@ const io = new Server(server, {
       'http://localhost:5173',
       'http://localhost:5174',
       'https://anndharaaman.netlify.app',
+      'https://s85-aman-capstone-anndhara-1-8beh.onrender.com',
       process.env.FRONTEND_URL
     ].filter(Boolean),
     methods: ['GET', 'POST'],
@@ -35,6 +36,7 @@ app.use(cors({
     'http://localhost:5173', 
     'http://localhost:5174',
     'https://anndharaaman.netlify.app',
+    'https://s85-aman-capstone-anndhara-1-8beh.onrender.com',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true,

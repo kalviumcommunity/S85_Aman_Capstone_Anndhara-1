@@ -13,7 +13,7 @@ const BuyerOrders = () => {
       navigate('/login');
       return;
     }
-    fetch(`http://localhost:9001/order/getResult?buyer=${user._id || user.id}`)
+    fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/getResult?buyer=${user._id || user.id}`)
       .then(res => res.json())
       .then(data => {
         setOrders(data.orders || []);

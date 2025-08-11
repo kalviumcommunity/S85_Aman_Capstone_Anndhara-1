@@ -57,11 +57,11 @@ function App() {
     if (user && (user._id || user.id)) {
       joinSocket(user._id || user.id);
       // Listen for real-time notifications
-      onNewNotification((notif) => {
+      onNewNotification((notif) => {  
         setNotifications((prev) => [notif, ...prev]);
       });
       // Fetch notifications from backend
-      fetch('http://localhost:9001/notification', {
+      fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/notification', {
         headers: { Authorization: `Bearer ${user.token}` }
       })
         .then(res => res.json())
@@ -69,7 +69,7 @@ function App() {
           if (data.success && Array.isArray(data.notifications)) {
             setNotifications(data.notifications);
           }
-        });
+        });  
     }
   }, []);
 

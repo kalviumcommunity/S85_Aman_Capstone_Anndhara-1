@@ -9,7 +9,7 @@ if (isGoogleOAuthConfigured) {
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "http://localhost:9001/auth/google/callback", // absolute URL
+        callbackURL: "https://s85-aman-capstone-anndhara-1-8beh.onrender.com/auth/google/callback", // absolute URL
     }, async (accessToken, refreshToken, profile, done) => {
         try {
             // First, check if user exists with this Google ID
