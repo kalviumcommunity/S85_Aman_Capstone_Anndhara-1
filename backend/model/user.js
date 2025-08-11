@@ -19,12 +19,11 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['farmer', 'buyer'],
-        required: true
+        enum: ['farmer', 'buyer', ''],
+        message: 'Role must be either "farmer", "buyer", or empty'
     },
     phone: {
-        type: String,
-        required: true
+        type: String
     },
     profileImage: String,
     googleId:{

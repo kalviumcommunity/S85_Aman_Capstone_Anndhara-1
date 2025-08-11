@@ -1,14 +1,14 @@
 import { useState } from "react";
 import axios from 'axios';
-
 import { Link, useNavigate } from "react-router-dom";
+import { useUser } from '../store/authStore';
 export default function Signup() {
   const navigate = useNavigate();
+  const { updateUser } = useUser();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    password: "",
-    phone: ""
+    password: ""
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -19,7 +19,7 @@ export default function Signup() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (!formData.email || !formData.username || !formData.password || !formData.phone) {
+    if (!formData.email || !formData.username || !formData.password) {
       setError("Please fill in all required fields.");
       setSuccess("");
       return;
@@ -35,38 +35,46 @@ export default function Signup() {
       setSuccess("");
       return;
     }
-    const phoneRegex = /^(\+91)?[6-9]\d{9}$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setError("Please enter a valid Indian phone number (10 digits).");
-      setSuccess("");
-      return;
-    }
     try {
       const resp = await axios.post('http://localhost:9001/user/register', formData);
       const { user, token } = resp.data;
 
-      localStorage.setItem('user', JSON.stringify({ 
+      const userData = { 
         token, 
         id: user._id, // Store MongoDB _id as 'id' to match JWT token structure
         _id: user._id, // Always include _id for MongoDB compatibility
         username: user.username,
         email: user.email,
-        role: user.role,
-        phone: user.phone
-      }));
+        role: user.role || '',
+        phone: user.phone || ''
+      };
+
+      // Update both localStorage and global user state
+      localStorage.setItem('user', JSON.stringify(userData));
+      updateUser(userData); // This will immediately update the UI
 
       setFormData({
         username: "",
         email: "",
-        password: "",
-        phone: ""
+        password: ""
       })
-      setSuccess("Signup successful! Please login.");
+      
+      // Redirect to home page after signup
+      setSuccess(`🎉 Account created successfully! You are now logged in. You can set your role and phone number in your account settings.`);
       setError("");
-      navigate('/login')
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
     } catch (err) {
-      const backendMessage = err.response?.data?.error || err.response?.data?.message || "SignUp falied. Please Try Again"
-      setError(backendMessage);
+      console.error('Signup error:', err.response?.data);
+      
+      // Check for MongoDB duplicate key error (code 11000)
+      if (err.response?.data?.message?.includes('Email Already is Use')) {
+        setError("This email is already registered. Please try logging in instead.");
+      } else {
+        const backendMessage = err.response?.data?.error || err.response?.data?.message || "SignUp failed. Please try again.";
+        setError(backendMessage);
+      }
       setSuccess("");
     }
   };
@@ -82,7 +90,7 @@ export default function Signup() {
           </div>
 
           <h2 className="text-3xl font-bold mb-2 text-gray-800">Create Your Account</h2>
-          <p className="text-gray-600 mb-6">Join our agricultural marketplace today</p>
+          <p className="text-gray-600 mb-6">Join our agricultural marketplace today - you'll be automatically logged in and can set your role later!</p>
 
 
           <form onSubmit={handleSignup} className="space-y-5">
@@ -123,7 +131,6 @@ export default function Signup() {
                 Password
               </label>
               <input
-
                 type="password"
                 name="password"
                 value={formData.password}
@@ -133,23 +140,7 @@ export default function Signup() {
               />
             </div>
 
-            {/* Phone */}
-            <div>
-              <label htmlFor="phone" className="block text-gray-700 font-semibold mb-1">
-                Phone
-              </label>
-              <input
 
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="+91"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-
-            {/* Role selector */}
 
             {/* Error message */}
             {success && <div className="text-green-600 font-semibold mt-4 mb-2 px-3 py-2 border border-green-600 rounded bg-green-50">{success}</div>}

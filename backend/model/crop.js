@@ -2,19 +2,45 @@ const mongoose = require('mongoose');
 const cropSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
+        required: [true, 'Crop name is required'],
+        trim: true,
+        minlength: [1, 'Crop name must be at least 1 character long'],
+        maxlength: [100, 'Crop name cannot exceed 100 characters']
     },
-    type: String, //vegetable,fruit
+    type: {
+        type: String,
+        required: [true, 'Crop type is required'],
+        enum: ['vegetable', 'fruit', 'grain', 'spice', 'herb', 'other'],
+        lowercase: true
+    },
     pricePerKg: {
         type: Number,
-        required: true
+        required: [true, 'Price per kg is required'],
+        min: [0.01, 'Price must be greater than 0']
     },
     quantityKg: {
         type: Number,
-        required: true
+        required: [true, 'Quantity is required'],
+        min: [0.1, 'Quantity must be at least 0.1 kg']
     },
-    imageUrl: String,
-    location: String,
+    imageUrl: {
+        type: String,
+        default: ''
+    },
+    imageData: {
+        type: String, // Base64 encoded image data
+        default: ''
+    },
+    imageContentType: {
+        type: String,
+        default: ''
+    },
+    location: {
+        type: String,
+        required: [true, 'Location is required'],
+        trim: true,
+        minlength: [2, 'Location must be at least 2 characters long']
+    },
     seller: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -24,5 +50,15 @@ const cropSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Virtual for full image URL
+cropSchema.virtual('fullImageUrl').get(function() {
+    return this.imageUrl ? `${process.env.BACKEND_URL || 'http://localhost:9001'}${this.imageUrl}` : null;
+});
+
 module.exports = mongoose.model('Crop', cropSchema);

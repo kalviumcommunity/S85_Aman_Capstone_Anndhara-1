@@ -1,11 +1,21 @@
 import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { useUser } from '../store/authStore';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { updateUser } = useUser();
+  const [googleOAuthError, setGoogleOAuthError] = useState("");
+  
   const handleGoogleLogin = () => { 
-    window.location.href = 'http://localhost:9001/auth/google';
+    try {
+      setGoogleOAuthError("");
+      // Direct redirect to Google OAuth - this is the correct way for OAuth flows
+      window.location.href = 'http://localhost:9001/auth/google';
+    } catch (error) {
+      setGoogleOAuthError('Failed to connect to Google OAuth. Please try again later.');
+    }
   };
   const [formData, setFormData] = useState({
     email: "",
@@ -43,29 +53,28 @@ export default function Login() {
 
       const { data, token } = resp.data;
 
-      // Save token and user info to localStorage
-      localStorage.setItem("user", JSON.stringify({
+      const userData = {
         token,
         id: data._id, // Store MongoDB _id as 'id' to match JWT token structure
         _id: data._id, // Always include _id for MongoDB compatibility
         username: data.username,
         email: data.email,
-        role: data.role,
-      }));
+        role: data.role || '',
+        phone: data.phone || ''
+      };
 
-      setSuccess("Login successful!");
+      // Update both localStorage and global user state
+      localStorage.setItem("user", JSON.stringify(userData));
+      updateUser(userData); // This will immediately update the UI
+      
+      setSuccess("Login successful! Redirecting...");
       setError("");
       setTimeout(() => {
         navigate('/');
-      }, 1500);  // 1.5 seconds delay to see message
-
-
-
+      }, 1500);
     } catch (err) {
-      const backendMessage =
-        err.response?.data?.error || err.response?.data?.message || "Login failed. Please try again.";
-
-      setError(backendMessage || 'Login failed. Please try again.');
+      const backendMessage = err.response?.data?.error || err.response?.data?.message || "Login failed. Please try again.";
+      setError(backendMessage);
       setSuccess("");
     }
   };
@@ -134,7 +143,18 @@ export default function Login() {
 
         {/* OR separator */}
         <div className="my-6 text-center text-gray-400 font-semibold">OR</div>
-        <button onClick={handleGoogleLogin} className="mt-4 bg-red-500 text-white p-2 rounded w-full">Login with Google</button>
+        
+        {/* Google OAuth Error */}
+        {googleOAuthError && (
+          <div className="flex items-center text-red-600 font-semibold mt-4 mb-2 px-3 py-2 border border-red-600 rounded bg-red-50">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            {googleOAuthError}
+          </div>
+        )}
+        
+        <button onClick={handleGoogleLogin} className="mt-4 bg-red-500 hover:bg-red-600 text-white p-2 rounded w-full transition-colors duration-200">
+          Login with Google
+        </button>
 
         <p className="mt-6 text-center text-gray-600">
           Don't have an account?{" "}

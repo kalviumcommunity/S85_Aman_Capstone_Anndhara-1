@@ -7,19 +7,18 @@ const { handleServerError } = require('../utils/errorHandler');
 const userCreatePost = async (req, res) => {
     try {
         const { username, email, password, photo, role, phone } = req.body;
-        if (!username || !email || !password || !phone) {
+        if (!username || !email || !password) {
             return res.status(400).json({
-                message: 'All fields are required!',
+                message: 'Username, email and password are required!',
                 missingFields: {
-                    username: !username ? 'User is required' : undefined,
+                    username: !username ? 'Username is required' : undefined,
                     email: !email ? 'Email is required' : undefined,
                     password: !password ? 'Password is required' : undefined,
-                    phone: !phone ? 'Phone is required' : undefined,
                 },
             });
         }
         const newUser = new User({
-            username, email, password, photo, role: role || '', phone
+            username, email, password, photo, role, phone
         });
 
         await newUser.save();
@@ -29,7 +28,23 @@ const userCreatePost = async (req, res) => {
             role: newUser.role,
         };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
-        return res.status(201).json({ message: 'User is created successfully!', success: true, data: newUser, token });
+        
+        // Return user data without password
+        const userResponse = {
+            _id: newUser._id,
+            username: newUser.username,
+            email: newUser.email,
+            role: newUser.role,
+            phone: newUser.phone,
+            createdAt: newUser.createdAt
+        };
+        
+        return res.status(201).json({ 
+            message: 'User is created successfully!', 
+            success: true, 
+            user: userResponse, 
+            token 
+        });
     }
     catch (error) {
         if (error.code === 11000) {
@@ -120,17 +135,17 @@ const userCreateGet = async (req, res) => {
 }
 //http://localhost:9001/user/update/680b7ef2d2de61db25949891
 const userCreatePut = async (req, res) => {
-    const { user, email, password, photo, role, phone } = req.body;
+    const { username, email, password, photo, role, phone } = req.body;
     try {
         const { id } = req.params;
-        if (!user && !email && !password && !photo && !role && !phone) {
+        if (!username && !email && !password && !photo && !role && !phone) {
             return res.status(400).json({
-                message: 'At least one field is required to updates',
+                message: 'At least one field is required to update',
                 success: false,
             });
         }
         const updateData = {};
-        if (user) updateData.user = user;
+        if (username) updateData.username = username;
         if (email) updateData.email = email;
         if (password) updateData.password = password;
         if (photo) updateData.photo = photo;

@@ -14,27 +14,83 @@ const CropUpload = () => {
     location: '',
   });
   const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('');
   const [user, setUser] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     const token = user?.token;
     if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        if (import.meta.env.MODE === 'development') console.log(decoded);
-        if (decoded.role !== 'farmer') {
+      // Fetch latest user data from server to ensure we have current role
+      fetch('http://localhost:9001/user/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const userData = data.data;
+          if (import.meta.env.MODE === 'development') console.log('Latest user data:', userData);
+          
+          // Since this component is protected by FarmerRoute, user should be a farmer
+          if (userData.role === 'farmer') {
+            setStatus('success');
+            setMessage('');
+            setUser(userData);
+          } else {
+            // This shouldn't happen due to route protection, but handle gracefully
+            setStatus('error');
+            setMessage('❌ Access denied. Only farmers can upload crops.');
+          }
+        } else {
           setStatus('error');
-          setMessage('Only farmer can upload crop. ')
+          setMessage('❌ Failed to fetch user data. Please try again.');
         }
-        setUser(decoded);
-      } catch (e) {
-        console.error("Invalid token");
-        localStorage.removeItem("token");
-      }
+      })
+      .catch(err => {
+        console.error('Error fetching user data:', err);
+        setStatus('error');
+        setMessage('❌ Error fetching user data. Please try again.');
+      });
+    } else {
+      setStatus('error');
+      setMessage('❌ Please login first.');
     }
+  }, []);
+
+  // Listen for role changes in localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user?.token) {
+        // Fetch latest user data from server
+        fetch('http://localhost:9001/user/me', {
+          headers: { Authorization: `Bearer ${user.token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            const userData = data.data;
+            if (userData.role === 'farmer') {
+              setStatus('success');
+              setMessage('');
+              setUser(userData);
+            } else {
+              // If user is no longer a farmer, redirect them
+              window.location.href = '/';
+            }
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching user data:', err);
+        });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Utility to check if token is expired
@@ -54,62 +110,134 @@ const CropUpload = () => {
   };
 
   const handleFileChange = (e) => {
-    setImage(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setStatus('error');
+        setMessage('❌ Please select only image files.');
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setStatus('error');
+        setMessage('❌ File size too large. Maximum size is 5MB.');
+        return;
+      }
+      
+      setImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear any previous error messages
+      if (status === 'error') {
+        setStatus('');
+        setMessage('');
+      }
+    } else {
+      setImage(null);
+      setImagePreview(null);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (isSubmitting) return; // Prevent double submission
+    
     const user = JSON.parse(localStorage.getItem('user'));
     const token = user?.token;
     if (!token || isTokenExpired(token)) {
       setStatus('error');
-      setMessage('❌ Please login to upload crops.');
-      localStorage.removeItem('user');
-      setUser(null);
+      setMessage('❌ Please login again.');
       return;
     }
 
+    // Validate form data
+    if (!formData.name.trim() || !formData.type || !formData.pricePerKg || !formData.quantityKg || !formData.location.trim()) {
+      setStatus('error');
+      setMessage('❌ Please fill in all required fields.');
+      return;
+    }
 
-    const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      data.append(key, value);
-    });
-    if (image) data.append('image', image);
+    if (parseFloat(formData.pricePerKg) <= 0 || parseFloat(formData.quantityKg) <= 0) {
+      setStatus('error');
+      setMessage('❌ Price and quantity must be greater than 0.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus('');
+    setMessage('⏳ Uploading crop...');
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('name', formData.name.trim());
+    formDataToSend.append('type', formData.type);
+    formDataToSend.append('pricePerKg', formData.pricePerKg);
+    formDataToSend.append('quantityKg', formData.quantityKg);
+    formDataToSend.append('location', formData.location.trim());
+    if (image) {
+      formDataToSend.append('image', image);
+    }
 
     try {
-      const res = await axios.post('http://localhost:9001/crop/crop', data, {
+      const response = await axios.post('http://localhost:9001/crop/crop', formDataToSend, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
       });
 
-      const result = res.data;
-      if (result.success) {
-        setMessage('✅ Crop uploaded successfully!');
+      if (response.data.success) {
         setStatus('success');
-        setFormData({ name: '', type: '', pricePerKg: '', quantityKg: '', location: '' });
-        setImage("");
-        navigate('/')
+        setMessage('✅ Crop uploaded successfully!');
+        setFormData({
+          name: '',
+          type: '',
+          pricePerKg: '',
+          quantityKg: '',
+          location: '',
+        });
+        setImage(null);
+        setImagePreview(null);
+        
+        // Redirect to home page after successful upload
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
       } else {
-        setMessage(result.message || 'Failed to upload crop.');
         setStatus('error');
+        setMessage(response.data.message || '❌ Failed to upload crop.');
       }
     } catch (error) {
-      console.error(error);
-      if (error.response) {
-        if (error.response.status === 401 || error.response.status === 403) {
-          setMessage('❌ Invalid or expired token. Please login again.');
-          setStatus('error');
-          localStorage.removeItem('token');
-        } else {
-          setMessage(error.response.data.message || 'Server Error');
-          setStatus('error');
-        }
-      } else {
-        setMessage('Network error or server is unreachable.');
+      console.error('Upload error:', error);
+      if (error.response?.status === 401) {
         setStatus('error');
+        setMessage('❌ Please login again.');
+      } else if (error.response?.status === 403) {
+        const errorData = error.response.data;
+        if (errorData.requiresRoleSetup) {
+          setStatus('error');
+          setMessage('❌ Please set your role to "farmer" in your profile settings to upload crops. Go to Profile → Edit Profile → Select "Farmer" role.');
+        } else {
+          setStatus('error');
+          setMessage(errorData.message || '❌ Access denied. Only farmers can upload crops.');
+        }
+      } else if (error.response?.status === 400) {
+        setStatus('error');
+        setMessage(error.response.data.message || '❌ Invalid data provided.');
+      } else {
+        setStatus('error');
+        setMessage('❌ Failed to upload crop. Please try again.');
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -119,9 +247,23 @@ const CropUpload = () => {
         <h2 className="text-3xl font-bold text-green-700 mb-6 text-center">🌾 Upload New Crop</h2>
 
         {user && (
-          <p className="text-sm text-red-600 text-center mb-4">
-            Logged in as: <strong>{user.user || user.email || user.name}</strong>
-          </p>
+          <div className="text-center mb-4">
+            <p className="text-sm text-green-600 mb-2">
+              Logged in as: <strong>{user.username || user.email || user.name}</strong>
+            </p>
+            {(!user.role || user.role === '') && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm">
+                <p className="text-yellow-700 font-semibold">⚠️ Role Not Set</p>
+                <p className="text-yellow-600">You need to set your role to "farmer" in your profile settings to upload crops.</p>
+                <button 
+                  onClick={() => navigate('/profile')}
+                  className="mt-2 text-blue-600 hover:text-blue-800 underline text-sm"
+                >
+                  Go to Profile Settings →
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         {message && (
@@ -147,11 +289,12 @@ const CropUpload = () => {
               <option value="" disabled>
                 Select Crop Type
               </option>
-              <option value="Crops">Crops</option>
-              <option value="Vegetable">Vegetable</option>
-              <option value="Fruits">Fruits</option>
-              <option value="Nursery & Plants">Nursery & Plants</option>
-              <option value="Dry Fruits">Dry Fruits</option>
+              <option value="vegetable">Vegetable</option>
+              <option value="fruit">Fruit</option>
+              <option value="grain">Grain</option>
+              <option value="spice">Spice</option>
+              <option value="herb">Herb</option>
+              <option value="other">Other</option>
 
             </select>
           </div>
@@ -169,12 +312,40 @@ const CropUpload = () => {
             />
           </div>
 
+          {imagePreview && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+              <div className="relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImage(null);
+                    setImagePreview(null);
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200 flex justify-center items-center gap-2"
+            disabled={isSubmitting}
+            className={`w-full font-semibold py-3 rounded-lg transition duration-200 flex justify-center items-center gap-2 ${
+              isSubmitting 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700 text-white'
+            }`}
           >
             <Upload size={18} />
-            Upload Crop
+            {isSubmitting ? 'Uploading...' : 'Upload Crop'}
           </button>
         </form>
       </div>
@@ -182,17 +353,17 @@ const CropUpload = () => {
   );
 };
 
-const Field = ({ icon, name, value, onChange, placeholder, type = 'text' }) => (
+const Field = ({ icon, name, value, onChange, placeholder, type = 'text', disabled = false }) => (
   <div className="flex items-center gap-2">
     {icon}
     <input
       name={name}
+      type={type}
       value={value}
       onChange={onChange}
-      type={type}
       placeholder={placeholder}
-      required
-      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none"
+      disabled={disabled}
+      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-green-400 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
     />
   </div>
 );

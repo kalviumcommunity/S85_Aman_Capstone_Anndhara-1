@@ -23,7 +23,12 @@ const io = new Server(server, {
 // Middlewares
 app.use(express.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173', 
+    'http://localhost:5174',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true,
 }));
 
@@ -34,7 +39,15 @@ app.use((req, res, next) => {
 
 // Ensure uploads folder exists
 if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
-app.use('/uploads', express.static('uploads'));
+
+// Serve static files with proper headers
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res, path) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+}));
 
 // Auth
 app.use(passport.initialize());
@@ -139,10 +152,25 @@ io.on('connection', (socket) => {
 });
 
 const port = process.env.PORT || 9001;
+
+// Set a default JWT secret if not provided
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'default_jwt_secret_change_in_production';
+  console.log('⚠️  Warning: Using default JWT_SECRET. Please set JWT_SECRET environment variable in production.');
+}
+
+// Set a default FRONTEND_URL if not provided
+if (!process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL = 'http://localhost:5173';
+  console.log('⚠️  Warning: Using default FRONTEND_URL. Please set FRONTEND_URL environment variable in production.');
+}
+
 db.connect().then(() => {
   server.listen(port, () => {
-    // console.log(`🚀 Socket.IO server running at http://localhost:${port}`);
+    console.log(`🚀 Server running at http://localhost:${port}`);
+    console.log(`📡 Socket.IO server is ready`);
   });
 }).catch((err) => {
   console.error('❌ Database connection failed:', err.message);
+  console.log('💡 Please make sure MongoDB is running on your system');
 });
