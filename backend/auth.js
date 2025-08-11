@@ -5,15 +5,15 @@ const User = require("./model/user");
 // Check if Google OAuth is properly configured
 const isGoogleOAuthConfigured = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET;
 
-if (isGoogleOAuthConfigured) {
+if (isGoogleOAuthConfigured)  {
     passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "https://s85-aman-capstone-anndhara-1-8beh.onrender.com/auth/google/callback", // absolute URL
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:9001/auth/google/callback", // absolute URL
     }, async (accessToken, refreshToken, profile, done) => {
         try {
             // First, check if user exists with this Google ID
-            let user = await User.findOne({ googleId: profile.id });
+             let  user = await User.findOne({ googleId: profile.id });
             
             if (!user) {
                 // If no user with Google ID, check if user exists with this email
