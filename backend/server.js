@@ -15,8 +15,15 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://anndharaaman.netlify.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -27,6 +34,7 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:5173', 
     'http://localhost:5174',
+    'https://anndharaaman.netlify.app',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true,
