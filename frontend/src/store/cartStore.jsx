@@ -19,7 +19,7 @@ export function useCart() {
     const fetchCart = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:9001/cart/', {
+        const res = await axios.get('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         setCart(res.data.cart?.items || []);
@@ -37,7 +37,7 @@ export function useCart() {
   const addToCart = async (crop, quantity = 1, proposedPrice) => {
     if (!isBuyer) return;
     try {
-      const res = await axios.post('http://localhost:9001/cart/add', {
+      const res = await axios.post('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/add', {
         cropId: crop._id,
         quantity,
         proposedPrice: proposedPrice || crop.pricePerKg
@@ -54,7 +54,7 @@ export function useCart() {
   const removeFromCart = async (cropId) => {
     if (!isBuyer) return;
     try {
-      const res = await axios.delete(`http://localhost:9001/cart/remove/${cropId}`, {
+      const res = await axios.delete(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/remove/${cropId}`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setCart(res.data.cart.items || []);
@@ -67,7 +67,7 @@ export function useCart() {
   const clearCart = async () => {
     if (!isBuyer) return;
     try {
-      const res = await axios.delete('http://localhost:9001/cart/clear', {
+      const res = await axios.delete('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/clear', {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setCart([]);

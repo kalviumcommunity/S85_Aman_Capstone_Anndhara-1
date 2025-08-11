@@ -5,7 +5,7 @@ const getImageUrl = (imageUrl) => {
   if (!imageUrl) return null;
   return imageUrl.startsWith('http')
     ? imageUrl
-    : `http://localhost:9001${imageUrl}`;
+    : `https://s85-aman-capstone-anndhara-1-8beh.onrender.com${imageUrl}`;
 };
 
 const CropDetails = () => {
@@ -33,7 +33,7 @@ const CropDetails = () => {
   useEffect(() => {
     const fetchCrop = async () => {
       try {
-        const res = await fetch(`http://localhost:9001/crop/${id}`);
+        const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/crop/${id}`);
         const data = await res.json();
         setCrop(data.crop);
         setLoadingCrop(false);
@@ -50,7 +50,7 @@ const CropDetails = () => {
     const fetchFarmer = async (farmerId) => {
       setLoadingFarmer(true);
       try {
-        const res = await fetch(`http://localhost:9001/user?id=${farmerId}`);
+        const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user?id=${farmerId}`);
         const data1 = await res.json();
 
         const farmer =
@@ -74,7 +74,7 @@ const CropDetails = () => {
     const fetchRatings = async () => {
       setLoadingRatings(true);
       try {
-        const res = await fetch(`http://localhost:9001/rating/getReview`);
+        const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/rating/getReview`);
         const data = await res.json();
 
         if (data.ok && Array.isArray(data.rating)) {
@@ -119,7 +119,7 @@ const CropDetails = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:9001/rating/Review`, {
+      const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/rating/Review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +156,7 @@ const CropDetails = () => {
       return;
     }
     try {
-      const res = await fetch('http://localhost:9001/cart/add', {
+      const res = await fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

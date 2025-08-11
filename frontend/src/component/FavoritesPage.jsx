@@ -14,7 +14,7 @@ const FavoritesPage = () => {
       navigate('/login');
       return;
     }
-    fetch('http://localhost:9001/favorite/my', {
+    fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/favorite/my', {
       headers: { Authorization: `Bearer ${user.token}` }
     })
       .then(res => res.json())
@@ -29,7 +29,7 @@ const FavoritesPage = () => {
   }, [user, navigate]);
 
   const handleUnfavorite = async (cropId) => {
-    const res = await fetch('http://localhost:9001/favorite/remove', {
+    const res = await fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/favorite/remove', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ const FavoritesPage = () => {
             <div key={fav.cropId?._id || fav._id} className='bg-white border rounded-lg shadow p-4 flex flex-col'>
               {fav.cropId && fav.cropId.imageUrl && (
                 <img
-                  src={`http://localhost:9001${fav.cropId.imageUrl}`}
+                  src={`https://s85-aman-capstone-anndhara-1-8beh.onrender.com${fav.cropId.imageUrl}`}
                   alt={fav.cropId && fav.cropId.name ? fav.cropId.name : 'Unknown Crop'}
                   className='rounded mb-3 w-full h-40 object-cover border'
                   onClick={() => fav.cropId && fav.cropId._id && navigate(`/crop-details/${fav.cropId._id}`)}

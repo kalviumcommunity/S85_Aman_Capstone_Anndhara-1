@@ -11,7 +11,7 @@ const OAuthSuccess = () => {
       setStatus('Fetching user data...');
       
       // Fetch user data using the token
-      fetch('http://localhost:9001/user/me', {
+      fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/me', {
         headers: { 
           Authorization: `Bearer ${token}` 
         }

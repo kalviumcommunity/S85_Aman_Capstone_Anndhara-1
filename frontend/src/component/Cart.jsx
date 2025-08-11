@@ -13,7 +13,7 @@ const Cart = () => {
     const fetchCart = async () => {
       setLoading(true);
       try {
-        const res = await fetch("http://localhost:9001/cart/", {
+        const res = await fetch("https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const data = await res.json();
@@ -30,7 +30,7 @@ const Cart = () => {
   // Edit price/quantity
   const handleUpdateItem = async (cropId, quantity, proposedPrice) => {
     try {
-      const res = await fetch("http://localhost:9001/cart/add", {
+      const res = await fetch("https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,7 +54,7 @@ const Cart = () => {
   // Remove item
   const handleRemoveItem = async (cropId) => {
     try {
-      const res = await fetch(`http://localhost:9001/cart/remove/${cropId}`, {
+      const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/remove/${cropId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });

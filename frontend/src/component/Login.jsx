@@ -12,7 +12,7 @@ export default function Login() {
     try {
       setGoogleOAuthError("");
       // Direct redirect to Google OAuth - this is the correct way for OAuth flows
-      window.location.href = 'http://localhost:9001/auth/google';
+      window.location.href = 'https://s85-aman-capstone-anndhara-1-8beh.onrender.com/auth/google';
     } catch (error) {
       setGoogleOAuthError('Failed to connect to Google OAuth. Please try again later.');
     }
@@ -47,7 +47,7 @@ export default function Login() {
     try {
 
 
-      const resp = await axios.post("http://localhost:9001/user/login", formData);
+      const resp = await axios.post("https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/login", formData);
 
       if (import.meta.env.MODE === 'development') console.log(resp);
 

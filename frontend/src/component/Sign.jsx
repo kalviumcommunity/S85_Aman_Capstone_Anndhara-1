@@ -36,7 +36,7 @@ export default function Signup() {
       return;
     }
     try {
-      const resp = await axios.post('http://localhost:9001/user/register', formData);
+      const resp = await axios.post('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/register', formData);
       const { user, token } = resp.data;
 
       const userData = { 

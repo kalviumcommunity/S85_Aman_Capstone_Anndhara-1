@@ -18,7 +18,7 @@ const CropList = () => {
       return;
     }
     try {
-      const res = await fetch('http://localhost:9001/cart/add', {
+      const res = await fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ const CropList = () => {
     try {
       console.log('🔄 Starting to fetch crops...');
       setLoading(true);
-      const response = await axios.get('http://localhost:9001/crop/AllCrop');
+      const response = await axios.get('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/crop/AllCrop');
       console.log('✅ API Response received:', response.data);
       
       if (response.data.crops && response.data.crops.length > 0) {

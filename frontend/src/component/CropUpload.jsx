@@ -25,7 +25,7 @@ const CropUpload = () => {
     const token = user?.token;
     if (token) {
       // Fetch latest user data from server to ensure we have current role
-      fetch('http://localhost:9001/user/me', {
+      fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -66,7 +66,7 @@ const CropUpload = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user?.token) {
         // Fetch latest user data from server
-        fetch('http://localhost:9001/user/me', {
+        fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/me', {
           headers: { Authorization: `Bearer ${user.token}` }
         })
         .then(res => res.json())
@@ -187,7 +187,7 @@ const CropUpload = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:9001/crop/crop', formDataToSend, {
+      const response = await axios.post('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/crop/crop', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`

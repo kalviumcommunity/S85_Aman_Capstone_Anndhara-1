@@ -12,7 +12,7 @@ const NotificationPage = ({ setNotifications: setGlobalNotifications }) => {
       setLoading(false);
       return;
     }
-    fetch('http://localhost:9001/notification', {
+    fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/notification', {
       headers: { Authorization: `Bearer ${user.token}` }
     })
       .then(res => res.json())
@@ -33,7 +33,7 @@ const NotificationPage = ({ setNotifications: setGlobalNotifications }) => {
   const handleMarkAsRead = async (notif, idx) => {
     if (notif.read) return;
     try {
-      await fetch(`http://localhost:9001/notification/${notif._id}/read`, {
+      await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/notification/${notif._id}/read`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${user.token}` }
       });

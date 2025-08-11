@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { io } from 'socket.io-client';
-const socket = io('http://localhost:9001');
+const socket = io('https://s85-aman-capstone-anndhara-1-8beh.onrender.com');
 
 const getInitials = (name, email) => {
   if (name) {
@@ -102,7 +102,7 @@ const FarmerMessages = () => {
         const userId = user.id;
         console.log('Fetching buyers for user ID:', userId);
         
-        const response = await axios.get(`http://localhost:9001/message/buyers/${userId}`, {
+        const response = await axios.get(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/message/buyers/${userId}`, {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         
@@ -112,7 +112,7 @@ const FarmerMessages = () => {
         
         // Fetch unread counts
         console.log('Fetching unread counts...');
-        const unreadRes = await axios.get(`http://localhost:9001/message/unread-counts/${userId}`, {
+        const unreadRes = await axios.get(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/message/unread-counts/${userId}`, {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         

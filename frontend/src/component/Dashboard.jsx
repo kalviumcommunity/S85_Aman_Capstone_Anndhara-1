@@ -133,7 +133,7 @@ const DashBoard = () => {
    */
   const fetchCrops = async () => {
     try {
-      const response = await fetch('http://localhost:9001/crop/AllCrop');
+      const response = await fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/crop/AllCrop');
       const data = await response.json();
       setCrops(data.crops || []);
     } catch (error) {
@@ -150,7 +150,7 @@ const DashBoard = () => {
     if (!user || !isBuyer || !user.token) return;
 
     try {
-      const response = await fetch('http://localhost:9001/favorite/my', {
+      const response = await fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/favorite/my', {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       const data = await response.json();
@@ -213,7 +213,7 @@ const DashBoard = () => {
   const toggleFavorite = async (cropId, isFav) => {
     if (!user || !user.token || !isBuyer) return;
 
-    const url = `http://localhost:9001/favorite/${isFav ? 'remove' : 'add'}`;
+    const url = `https://s85-aman-capstone-anndhara-1-8beh.onrender.com/favorite/${isFav ? 'remove' : 'add'}`;
     const method = isFav ? 'DELETE' : 'POST';
 
     try {

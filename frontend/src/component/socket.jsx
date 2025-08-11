@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const socket = io('http://localhost:9001', {
+const socket = io('https://s85-aman-capstone-anndhara-1-8beh.onrender.com', {
   autoConnect: false, // Only connect after login
 });
 

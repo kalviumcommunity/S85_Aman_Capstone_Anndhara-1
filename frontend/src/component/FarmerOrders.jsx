@@ -13,7 +13,7 @@ const FarmerOrders = () => {
       navigate('/login');
       return;
     }
-    fetch(`http://localhost:9001/order/farmer/${user._id || user.id}`)
+    fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/farmer/${user._id || user.id}`)
       .then(res => res.json())
       .then(data => {
         setOrders(data.orders || []);
@@ -27,7 +27,7 @@ const FarmerOrders = () => {
 
   const handleStatusChange = async (orderId, status) => {
     try {
-      const res = await fetch(`http://localhost:9001/order/update/${orderId}`, {
+      const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/update/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -43,7 +43,7 @@ const FarmerOrders = () => {
   const handleRemoveOrder = async (orderId) => {
     if (!window.confirm('Are you sure you want to remove this order?')) return;
     try {
-      const res = await fetch(`http://localhost:9001/order/update/${orderId}`, {
+      const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/update/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'cancelled' })
@@ -103,7 +103,7 @@ const FarmerOrders = () => {
                             const reason = window.prompt('Please provide a reason for rejection:');
                             if (!reason) return;
                             try {
-                              const res = await fetch(`http://localhost:9001/order/update/${order._id}`, {
+                              const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/update/${order._id}`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ status: 'rejected', reason })
@@ -151,7 +151,7 @@ const FarmerOrders = () => {
               if (!window.confirm('Are you sure you want to delete all your orders? This will cancel each order.')) return;
               try {
                 for (const order of orders) {
-                  await fetch(`http://localhost:9001/order/update/${order._id}`, {
+                  await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/update/${order._id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'cancelled' })

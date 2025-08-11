@@ -20,7 +20,7 @@ const Profile = () => {
       setCurrentUser(null);
       return;
     }
-    fetch('http://localhost:9001/user/me', {
+    fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/me', {
       headers: { Authorization: `Bearer ${user.token}` }
     })
       .then(res => res.json())
@@ -78,7 +78,7 @@ const Profile = () => {
     setMessage('');
     const userData = JSON.parse(localStorage.getItem('user'));
     try {
-      const res = await fetch(`http://localhost:9001/user/update/${currentUser._id || currentUser.id}`, {
+      const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/update/${currentUser._id || currentUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
