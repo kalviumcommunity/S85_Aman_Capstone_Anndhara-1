@@ -9,7 +9,7 @@ import { useCategory } from '../App';
 // UTILITY FUNCTIONS
 // ============================================================================
 
-/**
+/** 
  * Get the image source for display - prioritize MongoDB Base64 data with loading optimization
  * @param {object} crop - The crop object with imageData and imageContentType
  * @returns {string} - Image source (Base64 data URL or placeholder)
@@ -46,28 +46,31 @@ const ProductCard = ({
   const { user, isBuyer } = useUser();
 
   return (
-    <div className='bg-white border rounded-lg shadow hover:shadow-2xl p-4 transform transition-transform duration-200 hover:scale-105'>
+    <div className='bg-white border-2 border-gray-100 rounded-2xl shadow-lg hover:shadow-2xl p-6 transform transition-all duration-300 hover:scale-105 hover:border-green-200 group'>
       {/* Product Image and Favorite Button */}
       <div className='flex justify-between items-start'>
         {imgSrc && (
-          <img
-            src={imgSrc}
-            alt={title}
-            className='rounded mb-3 w-full h-40 object-cover border transition-opacity duration-300'
-            loading="lazy"
-            onLoad={(e) => {
-              e.target.style.opacity = '1';
-            }}
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/300x200/f0f0f0/999999?text=Image+Error';
-            }}
-            style={{ opacity: '0.7' }}
-          />
+          <div className='relative overflow-hidden rounded-xl mb-4'>
+            <img
+              src={imgSrc}
+              alt={title}
+              className='w-full h-48 object-cover transition-all duration-300 group-hover:scale-110'
+              loading="lazy"
+              onLoad={(e) => {
+                e.target.style.opacity = '1';
+              }}
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/300x200/f0f0f0/999999?text=Image+Error';
+              }}
+              style={{ opacity: '0.7' }}
+            />
+            <div className='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
+          </div>
         )}
         {typeof isFavorite !== 'undefined' && (
           <button
             aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
-            className='ml-2 text-red-500 text-xl focus:outline-none hover:scale-110 transition-transform'
+            className='absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2 text-red-500 text-lg focus:outline-none hover:scale-110 hover:bg-white transition-all duration-200 shadow-md'
             onClick={onToggleFavorite}
           >
             {isFavorite ? <FaHeart /> : <FaRegHeart />}
@@ -76,8 +79,10 @@ const ProductCard = ({
       </div>
 
       {/* Product Information */}
-      <h4 className='font-bold text-green-700 text-lg mb-1'>{title}</h4>
-      <p className='text-sm text-gray-600'>{description}</p>
+      <div className='space-y-3'>
+        <h4 className='font-bold text-gray-800 text-xl mb-2 group-hover:text-green-700 transition-colors duration-200'>{title}</h4>
+        <p className='text-gray-600 text-sm leading-relaxed line-clamp-2'>{description}</p>
+      </div>
 
       {/* Action Buttons */}
       <button
@@ -123,6 +128,8 @@ const DashBoard = () => {
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [trendingCrops, setTrendingCrops] = useState([]);
 
   // ========================================================================
   // DATA FETCHING
@@ -135,7 +142,12 @@ const DashBoard = () => {
     try {
       const response = await fetch('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/crop/AllCrop');
       const data = await response.json();
-      setCrops(data.crops || []);
+      const allCrops = data.crops || [];
+      setCrops(allCrops);
+      
+      // Set trending crops (random selection of 6 crops for demo)
+      const shuffled = [...allCrops].sort(() => 0.5 - Math.random());
+      setTrendingCrops(shuffled.slice(0, 6));
     } catch (error) {
       console.error("Error fetching crops:", error);
     } finally {

@@ -73,9 +73,21 @@ const Profile = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[6-9]\d{9}$/; // Indian phone number format
+    return phoneRegex.test(phone);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setMessage('');
+    
+    // Validate phone number
+    if (form.phone && !validatePhone(form.phone)) {
+      setMessage('Please enter a valid 10-digit Indian phone number starting with 6, 7, 8, or 9');
+      return;
+    }
+    
     const userData = JSON.parse(localStorage.getItem('user'));
     try {
       const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/user/update/${currentUser._id || currentUser.id}`, {
@@ -110,17 +122,17 @@ const Profile = () => {
         // Update the global user context
         updateUser(updatedUserData);
         
-        // If role changed, show message and refresh after delay
+        // If role changed, show message and navigate to home
         if (currentUser.role !== data.data.role) {
-          setMessage('Profile updated successfully! Role changed. UI will update shortly...');
+          setMessage('Profile updated successfully! Role changed.');
           
           // Update the global user context immediately
           updateUser(updatedUserData);
           
-          // Refresh the page after a short delay to update all components
+          // Navigate to home page after a short delay to show the message
           setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+            navigate('/');
+          }, 1500);
         }
       } else {
         setMessage(data.message || 'Failed to update profile.');
