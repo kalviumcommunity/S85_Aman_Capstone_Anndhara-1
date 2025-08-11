@@ -42,7 +42,7 @@ const BuyerOrders = () => {
   const handleRemoveOrder = async (orderId) => {
     if (!window.confirm('Are you sure you want to remove this order?')) return;
     try {
-      const res = await fetch(`http://localhost:9001/order/update/${orderId}`, {
+      const res = await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/update/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'cancelled' })
@@ -127,7 +127,7 @@ const BuyerOrders = () => {
               if (!window.confirm('Are you sure you want to delete all your orders? This will cancel each order.')) return;
               try {
                 for (const order of orders) {
-                  await fetch(`http://localhost:9001/order/update/${order._id}`, {
+                  await fetch(`https://s85-aman-capstone-anndhara-1-8beh.onrender.com/order/update/${order._id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'cancelled' })
