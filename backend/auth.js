@@ -12,16 +12,28 @@ if (isGoogleOAuthConfigured) {
         callbackURL: "http://localhost:9001/auth/google/callback", // absolute URL
     }, async (accessToken, refreshToken, profile, done) => {
         try {
+            // First, check if user exists with this Google ID
             let user = await User.findOne({ googleId: profile.id });
+            
             if (!user) {
-                user = await User.create({
-                    googleId: profile.id,
-                    username: profile.displayName,
-                    email: profile.emails[0].value,
-                    password: 'google_oauth_user_' + Math.random().toString(36).substr(2, 9), // Generate random password for OAuth users
-                    role: '', // Empty role - user must set it in profile
-                    phone: '', // Empty phone that can be filled later in profile
-                });
+                // If no user with Google ID, check if user exists with this email
+                user = await User.findOne({ email: profile.emails[0].value });
+                
+                if (user) {
+                    // User exists with this email, update with Google ID
+                    user.googleId = profile.id;
+                    await user.save();
+                } else {
+                    // No user exists, create new one
+                    user = await User.create({
+                        googleId: profile.id,
+                        username: profile.displayName,
+                        email: profile.emails[0].value,
+                        password: 'google_oauth_user_' + Math.random().toString(36).substr(2, 9), // Generate random password for OAuth users
+                        role: '', // Empty role - user must set it in profile
+                        phone: '', // Empty phone that can be filled later in profile
+                    });
+                }
             }
             return done(null, user);
         } catch (err) {
