@@ -84,19 +84,29 @@ io.on('connection', (socket) => {
     // console.log(`👤 User ${userId} connected with socket ID ${socket.id}`);
   });
 
-  socket.on('sendMessage', async ({ sender, receiver, content, cropId, orderId }) => {
+  socket.on('sendMessage', async ({ sender, receiver, content, cropId, orderId, senderRole }) => {
     const receiverSocket = users[receiver];
     // Save message to DB
     try {
+      // Get sender's role if not provided
+      let finalSenderRole = senderRole;
+      if (!finalSenderRole) {
+        const User = require('./model/user');
+        const senderUser = await User.findById(sender);
+        finalSenderRole = senderUser?.role || 'buyer';
+      }
+
       const messageData = {
         sender,
         receiver,
         content,
         cropId: cropId || null,
-        orderId: orderId || null
+        orderId: orderId || null,
+        senderRole: finalSenderRole
       };
       const message = new Message(messageData);
       await message.save();
+      
       // Emit to receiver if online
       if (receiverSocket) {
         io.to(receiverSocket).emit('receiveMessage', {
@@ -105,6 +115,7 @@ io.on('connection', (socket) => {
           content,
           cropId: cropId || null,
           orderId: orderId || null,
+          senderRole: finalSenderRole,
           createdAt: message.createdAt,
         });
       }
@@ -115,6 +126,7 @@ io.on('connection', (socket) => {
         content,
         cropId: cropId || null,
         orderId: orderId || null,
+        senderRole: finalSenderRole,
         createdAt: message.createdAt,
       });
     } catch (err) {

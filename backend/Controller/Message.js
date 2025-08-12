@@ -126,7 +126,7 @@ const createMessagePut = async (req, res) => {
 }
 
 // Unified message creation logic
-async function createChatMessage({ senderId, receiverId, content, cropId }) {
+async function createChatMessage({ senderId, receiverId, content, cropId, senderRole }) {
   // Validate sender and receiver
   const senderResult = await validateUser(senderId);
   if (!senderResult.valid) return { error: senderResult.error };
@@ -139,12 +139,15 @@ async function createChatMessage({ senderId, receiverId, content, cropId }) {
   if (!cropId) return { error: 'cropId is required for crop-specific chat' };
   const cropResult = await validateCrop(cropId);
   if (!cropResult.valid) return { error: cropResult.error };
+  // Use provided senderRole or fall back to sender's actual role
+  const finalSenderRole = senderRole || senderResult.user.role;
   // Create and save message
   const message = new Message({
     sender: senderId,
     receiver: receiverId,
     content,
     cropId,
+    senderRole: finalSenderRole,
     read: false
   });
   await message.save();
@@ -155,11 +158,12 @@ async function createChatMessage({ senderId, receiverId, content, cropId }) {
 const sendMessage = async (req, res) => {
   try {
     const senderId = req.user.id;
+    const senderRole = req.user.role;
     const { receiver, content, cropId } = req.body;
     if (!receiver || !content) {
       return res.status(400).json({ error: 'Receiver and content are required' });
     }
-    const result = await createChatMessage({ senderId, receiverId: receiver, content, cropId });
+    const result = await createChatMessage({ senderId, receiverId: receiver, content, cropId, senderRole });
     if (result.error) {
       return res.status(400).json({ error: result.error });
     }

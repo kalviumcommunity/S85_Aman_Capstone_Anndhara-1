@@ -121,9 +121,11 @@ const ChatBox = ({ user, otherUser, orderId, cartItemId, cropId: propCropId }) =
       receiver: safeOtherUser._id,
       content: input.trim(),
       cropId,
+      sender: safeUser._id,
+      senderRole: safeUser.role, // Include sender role for proper alignment
     };
     try {
-      socket.emit('sendMessage', { ...msg, sender: safeUser._id });
+      socket.emit('sendMessage', msg);
       setInput('');
     } catch (err) {
       setError('Could not send your message. Please try again.');
@@ -190,81 +192,163 @@ const ChatBox = ({ user, otherUser, orderId, cartItemId, cropId: propCropId }) =
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full bg-white shadow-lg">
         {/* Header */}
-        <div className="bg-green-600 text-white p-4 rounded-t-lg flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">
-              Chat with {safeOtherUser.username || safeOtherUser.email || 'User'}
-            </h2>
-            <p className="text-sm opacity-90">
-              {safeOtherUser.role === 'farmer' ? 'Farmer' : 'Buyer'}
-              {orderId && (
-                <span className="ml-2">• About Order</span>
-              )}
-            </p>
+        <div className="bg-green-600 text-white p-4 flex items-center justify-between border-b border-green-700 shadow-sm">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              <span className="text-lg font-bold">
+                {safeOtherUser.username?.charAt(0)?.toUpperCase() || '?'}
+              </span>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">
+                {safeOtherUser.username || safeOtherUser.email || 'User'}
+              </h2>
+              <p className="text-sm opacity-90">
+                {safeOtherUser.role === 'farmer' ? '🌾 Farmer' : '🛒 Buyer'}
+                {cropContext && ' • 🌱 Crop Chat'}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-3 items-center">
             {(orderId || cartItemId || (cropContext && cropContext.cropId)) && (
               <button
                 onClick={handleClearMessages}
-                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-xs font-semibold"
+                className="bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1"
               >
-                Clear All Messages
+                <span>🗑️</span>
+                <span>Clear Chat</span>
               </button>
             )}
             <button
               onClick={() => navigate(-1)}
-              className="text-white hover:text-gray-200"
+              className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1"
             >
-              ← Back
+              <span>←</span>
+              <span>Back</span>
             </button>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="h-96 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
           {loading ? (
-            <div className="flex items-center justify-center text-gray-500">Loading messages...</div>
+            <div className="flex items-center justify-center text-gray-500 h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
+                <p>Loading messages...</p>
+              </div>
+            </div>
           ) : error ? (
-            <div className="flex items-center justify-center text-red-600">{error}</div>
+            <div className="flex items-center justify-center text-red-600 h-full">
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <div className="text-4xl mb-2">⚠️</div>
+                <p>{error}</p>
+              </div>
+            </div>
           ) : messages.length === 0 ? (
-            <div className="text-center text-gray-500">
-              No messages yet. Start the conversation!
-              {cropContext && (
-                <div className="text-sm mt-2">
-                  This conversation is about a specific crop.
-                </div>
-              )}
+            <div className="text-center text-gray-500 h-full flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">💬</div>
+                <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
+                <p className="text-gray-400">Start the conversation!</p>
+                {cropContext && (
+                  <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="text-green-600 text-sm font-medium">
+                      🌱 This conversation is about a specific crop
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
-            messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${msg.sender === safeUser._id ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-xs px-4 py-2 rounded-lg ${
-                    msg.sender === safeUser._id
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-800'
-                  }`}
-                >
-                  {msg.content}
-                  {msg.cropId && (
-                    <div className="text-xs opacity-75 mt-1">
-                      📦 About crop
+            messages.map((msg, idx) => {
+              // Determine sender role more reliably
+              let senderRole = 'buyer'; // default
+              
+              // First check if message has senderRole property
+              if (msg.senderRole) {
+                senderRole = msg.senderRole;
+              } else {
+                // Determine role based on sender ID
+                if (msg.sender === safeUser._id) {
+                  senderRole = safeUser.role;
+                } else if (msg.sender === safeOtherUser._id) {
+                  senderRole = safeOtherUser.role;
+                }
+              }
+              
+              const isFarmerMessage = senderRole === 'farmer';
+              const isMyMessage = msg.sender === safeUser._id;
+              
+              return (
+                <div key={idx} className={`flex mb-3 ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`flex items-start space-x-2 max-w-xs lg:max-w-md ${isMyMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                    {/* Avatar */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                      isFarmerMessage ? 'bg-green-600' : 'bg-blue-600'
+                    }`}>
+                      {isFarmerMessage ? '🌾' : '🛒'}
                     </div>
-                  )}
+                    
+                    {/* Message bubble */}
+                    <div className="flex flex-col">
+                      {/* Sender name - More prominent */}
+                      <div className={`text-sm font-semibold mb-2 px-1 ${
+                        isMyMessage ? 'text-right text-green-700' : 'text-left text-blue-700'
+                      }`}>
+                        {isMyMessage ? (
+                          <span className="bg-green-100 px-2 py-1 rounded-full text-green-800">
+                            You ({safeUser.role === 'farmer' ? '🌾 Farmer' : '🛒 Buyer'})
+                          </span>
+                        ) : (
+                          <span className="bg-blue-100 px-2 py-1 rounded-full text-blue-800">
+                            {isFarmerMessage ? 
+                              `🌾 ${safeOtherUser.username || 'Farmer'}` : 
+                              `🛒 ${safeOtherUser.username || 'Buyer'}`
+                            }
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className={`px-4 py-2 rounded-2xl shadow-sm ${
+                        isMyMessage 
+                          ? 'bg-green-500 text-white rounded-br-md' 
+                          : 'bg-white text-gray-800 border border-gray-200 rounded-bl-md'
+                      }`}>
+                        <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                        
+                        {/* Timestamp and status */}
+                        <div className={`flex items-center justify-end mt-1 space-x-1 ${
+                          isMyMessage ? 'text-green-100' : 'text-gray-400'
+                        }`}>
+                          <span className="text-xs">
+                            {new Date(msg.timestamp || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                          {isMyMessage && (
+                            <span className="text-xs">✓✓</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           {otherTyping && (
-            <div className="flex justify-start">
-              <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg">
-                Typing...
+            <div className="flex justify-start mb-2">
+              <div className="bg-white text-gray-600 px-4 py-2 rounded-2xl rounded-bl-md border border-gray-200 shadow-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                  <span className="text-xs">typing...</span>
+                </div>
               </div>
             </div>
           )}
@@ -272,21 +356,26 @@ const ChatBox = ({ user, otherUser, orderId, cartItemId, cropId: propCropId }) =
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSend} className="p-4 border-t">
-          <div className="flex space-x-2">
-            <input
-              value={input}
-              onChange={handleInput}
-              placeholder="Type a message..."
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-              disabled={!cropId}
-            />
+        <form onSubmit={handleSend} className="p-4 bg-white border-t border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="flex-1">
+              <input
+                value={input}
+                onChange={handleInput}
+                placeholder="Type a message..."
+                className="w-full bg-gray-100 rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:bg-white transition-all duration-200 text-sm"
+                disabled={!cropId}
+              />
+              {!cropId && (
+                <p className="text-xs text-red-500 mt-1">⚠️ Crop context required for messaging</p>
+              )}
+            </div>
             <button
               type='submit'
               disabled={!input.trim() || !cropId}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
             >
-              Send
+              <span className="text-lg">➤</span>
             </button>
           </div>
         </form>
