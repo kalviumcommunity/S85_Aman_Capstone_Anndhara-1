@@ -281,7 +281,12 @@ const DashBoard = () => {
           id={crop._id}
           imgSrc={getImageSrc(crop)}
           title={crop.name}
-          description={`Type: ${crop.type} | Price => ₹${crop.pricePerKg} | Quantity => ${crop.quantityKg} Kg | Location ${crop.location}`}
+          description={
+            <>
+          Price: ₹{crop.pricePerKg} Rupess <br />
+            Quantity: {crop.quantityKg}/kg
+            </>
+        }
           onViewDetails={handleViewDetails}
           onAddToCart={handleAddToCart}
           showAddToCart={isBuyer}
@@ -294,7 +299,7 @@ const DashBoard = () => {
   );
 
   return (
-    <div className='min-h-screen bg-white font-sans'>
+    <div className='min-h-screen bg-white font-sans flex flex-col'>
       {/* Hero Section */}
       <section className='bg-green-50 text-center py-14 px-4'>
         <h2 className='text-4xl font-extrabold text-green-700 mb-4'>
@@ -311,19 +316,21 @@ const DashBoard = () => {
       </section>
 
       {/* Products Section */}
-      <section className='px-6 py-8'>
+      <section className='px-6 py-8 flex-grow'>
         <h4 className='text-2xl font-semibold text-green-800 mb-6 text-center'>
           Products Available for Buy & Sell
         </h4>
 
         {/* Products Display */}
-        {loading ? renderLoading() : 
-         filteredCrops.length === 0 ? renderEmpty() : 
-         renderCropsGrid()}
+        <div className='min-h-[200px]'>
+          {loading ? renderLoading() : 
+           filteredCrops.length === 0 ? renderEmpty() : 
+           renderCropsGrid()}
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className='bg-green-800 text-white text-center py-4 mt-10 shadow-inner'>
+      <footer className='bg-green-800 text-white text-center py-4 shadow-inner mt-auto'>
         <div className='flex flex-col md:flex-row items-center justify-center gap-2'>
           <span className='font-bold text-lg'>Annadhara</span>
           <span className='text-sm'>&copy; 2025. All rights reserved.</span>

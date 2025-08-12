@@ -59,32 +59,65 @@ const userCreatePost = async (req, res) => {
 // login  
 const userLoginPost = async (req, res) => {
     try {
+        console.log('Login attempt:', { email: req.body.email, hasPassword: !!req.body.password });
+        
         const { email, password } = req.body;
         if (!email || !password) {
-            return res.status(400).json({ success: false, message: 'All Field required' })
+            console.log('Missing email or password');
+            return res.status(400).json({ success: false, message: 'Email and password are required' })
         }
+        
+        // Check if JWT_SECRET exists
+        if (!process.env.JWT_SECRET) {
+            console.error('JWT_SECRET is not defined in environment variables');
+            return res.status(500).json({ success: false, message: 'Server configuration error' });
+        }
+        
         const emailExist = await User.findOne({ email });
         if (!emailExist) {
-            return res.status(401).json({ message: 'Invalid Credentials' })
+            console.log('User not found with email:', email);
+            return res.status(401).json({ success: false, message: 'Invalid credentials' })
         }
+        
+        console.log('User found, comparing passwords...');
         const isMatch = await bcrypt.compare(password, emailExist.password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid Credentials', success: false })
+            console.log('Password mismatch for user:', email);
+            return res.status(401).json({ success: false, message: 'Invalid credentials' })
         }
+        
         const payload = {
             id: emailExist._id,
             email: emailExist.email,
             role: emailExist.role,
         }
+        
+        console.log('Generating JWT token...');
         const token = jwt.sign(
             payload,
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         )
 
+        // Return user data without password
+        const userResponse = {
+            _id: emailExist._id,
+            username: emailExist.username,
+            email: emailExist.email,
+            role: emailExist.role,
+            phone: emailExist.phone,
+            createdAt: emailExist.createdAt
+        };
 
-        return res.status(200).json({ message: 'Login Successfull!', success: true, data: emailExist, token })
+        console.log('Login successful for user:', email);
+        return res.status(200).json({ 
+            message: 'Login successful!', 
+            success: true, 
+            data: userResponse, 
+            token 
+        })
     } catch (error) {
+        console.error('Login error:', error);
         return handleServerError(res, error, 'Server error during login');
     }
 
