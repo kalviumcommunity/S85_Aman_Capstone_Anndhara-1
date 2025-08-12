@@ -30,7 +30,12 @@ FRONTEND_URL=http://localhost:5173
 2. Click "Create Credentials" > "OAuth 2.0 Client IDs"
 3. Choose "Web application" as the application type
 4. Add these Authorized redirect URIs:
-   - `http://localhost:9001/auth/google/callback`
+   - `Access blocked: This app’s request is invalid
+
+amanrohilla520@gmail.com
+You can’t sign in because this app sent an invalid request. You can try again later or contact the developer about this issue. Learn more about this error
+If you are a developer of this app, see error details.
+Error 400: redirect_uri_mismatch`
    - `http://localhost:5173/oauth-success`
 5. Click "Create"
 

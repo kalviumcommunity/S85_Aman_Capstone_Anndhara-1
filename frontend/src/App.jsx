@@ -12,7 +12,7 @@ import Profile from './component/profile';
 import { ProtectedRoute, FarmerRoute } from './component/ProtectedRoute';
 import Checkout from './component/Checkout';
 import FarmerOrders from './component/FarmerOrders';
-import './index.css';
+import './index.css';      
 import ChatPage from './component/ChatPage';
 import { joinSocket, onNewNotification } from './component/socket';
 import Navbar from './component/Navbar';
@@ -31,7 +31,7 @@ export const useCategory = () => {
   }
   return context;
 };
-
+// aman
 // Layout component to manage navbar state
 const Layout = ({ children, notifications, setNotifications }) => {
   const [selectedCategory, setSelectedCategory] = useState('Crops');
@@ -48,7 +48,7 @@ const Layout = ({ children, notifications, setNotifications }) => {
     </CategoryContext.Provider>
   );
 };
-
+// aman
 function App() {
   const [notifications, setNotifications] = useState([]);
 

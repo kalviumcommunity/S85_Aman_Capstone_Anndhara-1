@@ -56,9 +56,9 @@
 - 📩 Directly contact farmers for negotiation
 - ✅ Place orders with status tracking
 
----
-
-## 🔐 Authentication
+---   
+   
+## 🔐 Authentication Role
 
 | Feature | Description |
 |--------|-------------|

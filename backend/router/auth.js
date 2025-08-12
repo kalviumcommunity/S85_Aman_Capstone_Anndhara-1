@@ -19,8 +19,8 @@ router.get('/google', (req, res) => {
     }
     
     // Debug: Log the callback URL being used
-    const callbackURL = process.env.GOOGLE_CALLBACK_URL || "http://localhost:9001/auth/google/callback";
-    console.log('🔍 DEBUG: OAuth callback URL being used:', callbackURL);
+    // const callbackURL = process.env.GOOGLE_CALLBACK_URL || "http://localhost:9001/auth/google/callback";
+    // console.log('🔍 DEBUG: OAuth callback URL being used:', callbackURL);
     console.log('🔍 DEBUG: GOOGLE_CLIENT_ID exists:', !!process.env.GOOGLE_CLIENT_ID);
     console.log('🔍 DEBUG: GOOGLE_CLIENT_SECRET exists:', !!process.env.GOOGLE_CLIENT_SECRET);
     
