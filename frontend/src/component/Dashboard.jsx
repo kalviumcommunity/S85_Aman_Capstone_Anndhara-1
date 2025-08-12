@@ -281,7 +281,7 @@ const DashBoard = () => {
           id={crop._id}
           imgSrc={getImageSrc(crop)}
           title={crop.name}
-          description={`Type: ${crop.type} | ₹${crop.pricePerKg}/kg | ${crop.quantityKg} Kg | ${crop.location}`}
+          description={`Type: ${crop.type} | Price => ₹${crop.pricePerKg} | Quantity => ${crop.quantityKg} Kg | Location ${crop.location}`}
           onViewDetails={handleViewDetails}
           onAddToCart={handleAddToCart}
           showAddToCart={isBuyer}
