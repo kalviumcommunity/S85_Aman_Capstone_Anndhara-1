@@ -23,7 +23,7 @@ const io = new Server(server, {
       'https://s85-aman-capstone-anndhara-1-8beh.onrender.com',
       process.env.FRONTEND_URL
     ].filter(Boolean),
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST','PUT','DELETE'],
     credentials: true,
   },
 });

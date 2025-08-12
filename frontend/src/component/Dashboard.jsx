@@ -293,10 +293,6 @@ const DashBoard = () => {
     </div>
   );
 
-  // ========================================================================
-  // MAIN RENDER
-  // ========================================================================
-
   return (
     <div className='min-h-screen bg-white font-sans'>
       {/* Hero Section */}
@@ -311,9 +307,7 @@ const DashBoard = () => {
           Connect Directly with Farmers, Suppliers, and Buyers Across Bharat.
           Get the best prices for quality agricultural products.
         </p>
-        <button className='bg-green-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-green-700 hover:text-orange-400 transition-transform duration-200 transform hover:scale-105'>
-          <b>Start Trading Now</b>
-        </button>
+       
       </section>
 
       {/* Products Section */}

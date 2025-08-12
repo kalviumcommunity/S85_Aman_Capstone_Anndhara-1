@@ -239,4 +239,58 @@ const getCropImage = async (req, res) => {
   }
 };
 
-module.exports = { createCrop, getCrops, updateCrop, getCropById, getCropImage };
+// DELETE /crop/delete/:id - Delete a crop
+const deleteCrop = async (req, res) => {
+  try {
+    console.log('DELETE request received for crop ID:', req.params.id);
+    console.log('User making request:', req.user?.id);
+    
+    const cropId = req.params.id;
+    
+    // Validate crop ID format
+    if (!cropId || !cropId.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log('Invalid crop ID format:', cropId);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid crop ID format' 
+      });
+    }
+    
+    // Find the crop first to check if it exists and if user owns it
+    const crop = await Crop.findById(cropId);
+    if (!crop) {
+      console.log('Crop not found with ID:', cropId);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Crop not found' 
+      });
+    }
+    
+    // Check if the user owns this crop (optional security check)
+    if (crop.seller.toString() !== req.user.id) {
+      console.log('User does not own this crop. Crop seller:', crop.seller, 'User ID:', req.user.id);
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You can only delete your own crops' 
+      });
+    }
+    
+    // Delete the crop
+    await Crop.findByIdAndDelete(cropId);
+    console.log('Crop deleted successfully:', cropId);
+    
+    res.json({ 
+      success: true, 
+      message: 'Crop deleted successfully' 
+    });
+  } catch (err) {
+    console.error('Error deleting crop:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error deleting crop',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+module.exports = { createCrop, getCrops, updateCrop, getCropById, getCropImage, deleteCrop };
