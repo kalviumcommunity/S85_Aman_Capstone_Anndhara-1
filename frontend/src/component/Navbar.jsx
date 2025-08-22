@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaBell, FaHeart, FaShoppingCart, FaUserCircle } from 'react-icons/fa';
 import { useUser } from '../store/authStore';
 import { useCart } from '../store/cartStore';
@@ -7,6 +7,7 @@ import { useCart } from '../store/cartStore';
 const Navbar = ({ notifications, setNotifications, selectedCategory, setSelectedCategory, searchQuery, setSearchQuery }) => {
   const { user, isFarmer, isBuyer, hasRole } = useUser();
   const { cart } = useCart();
+  const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
 
@@ -150,41 +151,17 @@ const Navbar = ({ notifications, setNotifications, selectedCategory, setSelected
                 )}
                 
                 {/* Notifications */}
-                <div className="relative flex-shrink-0">
-                  <button
-                    className="relative p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200"
-                    onClick={() => setShowDropdown(!showDropdown)}
-                  >
-                    <FaBell className="text-lg text-green-700" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-                  {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-72 bg-white border rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
-                      <div className="p-3 font-medium border-b bg-green-50">Notifications</div>
-                      {notifications.length === 0 ? (
-                        <div className="p-4 text-gray-500 text-center">No notifications</div>
-                      ) : (
-                        notifications.map((notif, idx) => (
-                          <div
-                            key={idx}
-                            className={`p-3 border-b hover:bg-gray-50 cursor-pointer transition-colors ${notif.read ? 'opacity-60' : ''}`}
-                            onClick={() => handleMarkAsRead(idx)}
-                          >
-                            <div className="font-medium text-sm">{notif.message}</div>
-                            <div className="text-xs text-gray-500 mt-1">{new Date(notif.createdAt).toLocaleString()}</div>
-                          </div>
-                        ))
-                      )}
-                      <div className="p-2 text-center border-t">
-                        <Link to="/notifications" className="text-green-700 text-sm hover:underline">View All</Link>
-                      </div>
-                    </div>
+                <Link 
+                  to="/notifications" 
+                  className="relative flex-shrink-0 p-2 rounded-lg bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 transition-all duration-300 shadow-sm hover:shadow-md"
+                >
+                  <FaBell className={`text-lg transition-all duration-300 ${unreadCount > 0 ? 'text-green-600 animate-pulse' : 'text-green-700'}`} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center shadow-lg animate-bounce">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                   )}
-                </div>
+                </Link>
 
                 {/* Logout */}
                 <button
