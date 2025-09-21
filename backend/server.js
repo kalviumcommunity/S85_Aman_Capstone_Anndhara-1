@@ -18,7 +18,7 @@ const io = new Server(server, {
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:5174',
-      'https://anndharaaman.netlify.app',
+      'https://anndhara.netlify.app',
       'https://s85-aman-capstone-anndhara-1-8beh.onrender.com',
       process.env.FRONTEND_URL
     ].filter(Boolean),
@@ -35,7 +35,7 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:5173', 
     'http://localhost:5174',
-    'https://anndharaaman.netlify.app',
+    'https://anndhara.netlify.app',
     'https://s85-aman-capstone-anndhara-1-8beh.onrender.com',
     process.env.FRONTEND_URL
   ].filter(Boolean),
