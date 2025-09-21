@@ -547,17 +547,24 @@
             /* Display Mode */
             <div className="flex items-start space-x-6">
               <div className="flex-shrink-0">
-                {crop.imageData && crop.imageContentType ? (
+                {crop.imageUrl ? (
+                  <img
+                    src={crop.imageUrl}
+                    alt={crop.name}
+                    className="w-48 h-48 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                  />
+                ) : (crop.imageData && crop.imageContentType) ? (
                   <img
                     src={`data:${crop.imageContentType};base64,${crop.imageData}`}
                     alt={crop.name}
                     className="w-48 h-48 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                   />
-                ) : (
-                  <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center border border-gray-300">
-                    <span className="text-gray-500">No Image</span>
-                  </div>
-                )}
+                ) : null}
+                <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center border border-gray-300" style={{display: (crop.imageUrl || (crop.imageData && crop.imageContentType)) ? 'none' : 'flex'}}>
+                  <span className="text-gray-500">No Image</span>
+                </div>
               </div>
 
               <div className="flex-1">

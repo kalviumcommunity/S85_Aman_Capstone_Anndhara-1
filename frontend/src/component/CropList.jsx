@@ -104,44 +104,46 @@ const CropList = () => {
             {crops.map(crop => (
               <div key={crop._id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 {/* Image Section */}
-                <div className="h-48 bg-gray-100 relative">
-                  {console.log(`🖼️ Rendering image for crop ${crop.name}:`, {
-                    hasImageDataUrl: !!crop.imageDataUrl,
-                    hasImageData: !!crop.imageData,
-                    imageContentType: crop.imageContentType,
-                    imageDataLength: crop.imageData?.length
-                  })}
-                  {(crop.imageData && crop.imageContentType) ? (
+                <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ paddingTop: '66.666%' }}>
+                  {crop.imageUrl ? (
+                    <img
+                      src={crop.imageUrl}
+                      alt={crop.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.error(`❌ Cloudinary image failed for ${crop.name}`);
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : (crop.imageData && crop.imageContentType) ? (
                     <img
                       src={`data:${crop.imageContentType};base64,${crop.imageData}`}
                       alt={crop.name}
-                      className="w-full h-full object-cover transition-all duration-500 ease-in-out"
+                      className="absolute inset-0 w-full h-full object-cover"
                       loading="lazy"
-                      style={{ opacity: '0.8', filter: 'blur(1px)' }}
-                      onLoad={(e) => {
-                        e.target.style.opacity = '1';
-                        e.target.style.filter = 'blur(0px)';
-                        console.log(`✅ Database image loaded for ${crop.name}`);
-                      }}
                       onError={(e) => {
-                        console.error(`❌ Database image failed for ${crop.name}`);
+                        console.error(`❌ Base64 image failed for ${crop.name}`);
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-green-200">
+                    <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-green-200">
                       <div className="text-center">
                         <div className="animate-pulse">
                           <div className="w-12 h-12 bg-green-300 rounded-full mx-auto mb-2"></div>
-                          <span className="text-gray-500 text-sm">Loading Image...</span>
+                          <span className="text-gray-500 text-sm">Image not available</span>
                         </div>
                       </div>
                     </div>
                   )}
-                  <div className="w-full h-full flex-col items-center justify-center bg-gradient-to-br from-green-100 to-green-200" style={{display: 'none'}}>
-                    <ImageIcon size={48} className="text-green-400" />
-                    <span className="text-xs text-gray-500 mt-2">Image not available</span>
+                  <div className="absolute inset-0 w-full h-full hidden items-center justify-center bg-gradient-to-br from-green-100 to-green-200">
+                    <div className="text-center">
+                      <ImageIcon size={48} className="text-green-400 mx-auto" />
+                      <span className="text-xs text-gray-500 mt-2 block">Image not available</span>
+                    </div>
                   </div>
                 </div>
                 

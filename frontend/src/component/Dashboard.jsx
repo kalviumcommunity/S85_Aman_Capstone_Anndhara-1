@@ -10,17 +10,27 @@ import { useCategory } from '../App';
 // ============================================================================
 
 /** 
- * Get the image source for display - prioritize MongoDB Base64 data with loading optimization
- * @param {object} crop - The crop object with imageData and imageContentType
- * @returns {string} - Image source (Base64 data URL or placeholder)
+ * Get the image source for display - prefer Cloudinary URL, then Base64, else inline SVG placeholder
+ * @param {object} crop - The crop object
+ * @returns {string} - Image source (Cloudinary URL, Base64 data URL, or inline SVG placeholder)
  */
 const getImageSrc = (crop) => {
-  // Use MongoDB Base64 data if available
+  // Prefer Cloudinary URL if present
+  if (crop.imageUrl) return crop.imageUrl;
+  // Fallback to MongoDB Base64 data if available
   if (crop.imageData && crop.imageContentType) {
     return `data:${crop.imageContentType};base64,${crop.imageData}`;
   }
-  // Fallback to loading placeholder if no image data
-  return 'https://via.placeholder.com/300x200/f0f0f0/999999?text=Loading...';
+  // Inline SVG placeholder (no external DNS dependency)
+  return 'data:image/svg+xml;utf8,' +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200">
+        <rect width="100%" height="100%" fill="#f0f0f0"/>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="16">
+          Image not available
+        </text>
+      </svg>`
+    );
 };
 
 // ============================================================================
@@ -40,31 +50,58 @@ const ProductCard = ({
   showAddToCart, 
   sellerId, 
   isFavorite, 
-  onToggleFavorite 
+  onToggleFavorite,
+  index = 0,
 }) => {
   const navigate = useNavigate();
   const { user, isBuyer } = useUser();
+  const [mounted, setMounted] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 60 * Math.min(index, 10));
+    return () => clearTimeout(t);
+  }, [index]);
 
   return (
-    <div className='bg-white border-2 border-gray-100 rounded-2xl shadow-lg hover:shadow-2xl p-6 transform transition-all duration-300 hover:scale-105 hover:border-green-200 group'>
+    <div
+      className={
+        'bg-white border-2 border-gray-100 rounded-2xl shadow-lg p-6 transform transition-all duration-500 ease-out hover:shadow-2xl hover:-translate-y-1 hover:border-green-200 group ' +
+        (mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3')
+      }
+    >
       {/* Product Image and Favorite Button */}
       <div className='flex justify-between items-start'>
         {imgSrc && (
-          <div className='relative overflow-hidden rounded-xl mb-4'>
+          <div className='relative overflow-hidden rounded-xl mb-4 w-full bg-gray-100' style={{ paddingTop: '66.666%' }}>
+            {/* 4:3 aspect ratio wrapper; image fills the frame consistently */}
+            {/* Shimmer skeleton while image loads */}
+            {!imgLoaded && (
+              <div className='absolute inset-0 animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200' />
+            )}
             <img
               src={imgSrc}
               alt={title}
-              className='w-full h-48 object-cover transition-all duration-300 group-hover:scale-110'
+              className='absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
               loading="lazy"
               onLoad={(e) => {
                 e.target.style.opacity = '1';
+                setImgLoaded(true);
               }}
               onError={(e) => {
-                e.target.src = 'https://via.placeholder.com/300x200/f0f0f0/999999?text=Image+Error';
+                const inlinePlaceholder = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+                  `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200">
+                    <rect width="100%" height="100%" fill="#f0f0f0"/>
+                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="16">
+                      Image error
+                    </text>
+                  </svg>`
+                );
+                e.target.src = inlinePlaceholder;
               }}
-              style={{ opacity: '0.7' }}
+              style={{ opacity: '0.9' }}
             />
-            <div className='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
+            <div className='absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
           </div>
         )}
         {typeof isFavorite !== 'undefined' && (
@@ -275,7 +312,7 @@ const DashBoard = () => {
    */
   const renderCropsGrid = () => (
     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
-      {filteredCrops.map(crop => (
+      {filteredCrops.map((crop, i) => (
         <ProductCard
           key={crop._id}
           id={crop._id}
@@ -293,6 +330,7 @@ const DashBoard = () => {
           sellerId={crop.seller?._id}
           isFavorite={favorites.includes(crop._id)}
           onToggleFavorite={() => toggleFavorite(crop._id, favorites.includes(crop._id))}
+          index={i}
         />
       ))}
     </div>

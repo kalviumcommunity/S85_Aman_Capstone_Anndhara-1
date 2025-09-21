@@ -14,6 +14,7 @@ const CropUpload = () => {
     location: '',
   });
   const [image, setImage] = useState(null);
+  const [imageDataUrl, setImageDataUrl] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('');
@@ -131,7 +132,9 @@ const CropUpload = () => {
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target.result);
+        const dataUrl = e.target.result;
+        setImagePreview(dataUrl);
+        setImageDataUrl(dataUrl);
       };
       reader.readAsDataURL(file);
       
@@ -143,6 +146,7 @@ const CropUpload = () => {
     } else {
       setImage(null);
       setImagePreview(null);
+      setImageDataUrl('');
     }
   };
 
@@ -176,20 +180,19 @@ const CropUpload = () => {
     setStatus('');
     setMessage('⏳ Uploading crop...');
 
-    const formDataToSend = new FormData();
-    formDataToSend.append('name', formData.name.trim());
-    formDataToSend.append('type', formData.type);
-    formDataToSend.append('pricePerKg', formData.pricePerKg);
-    formDataToSend.append('quantityKg', formData.quantityKg);
-    formDataToSend.append('location', formData.location.trim());
-    if (image) {
-      formDataToSend.append('image', image);
-    }
+    const payload = {
+      name: formData.name.trim(),
+      type: formData.type,
+      pricePerKg: formData.pricePerKg,
+      quantityKg: formData.quantityKg,
+      location: formData.location.trim(),
+      // Send image as base64 data URL for backend to upload to Cloudinary
+      imageDataUrl: imageDataUrl || undefined,
+    };
 
     try {
-      const response = await axios.post('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/crop/crop', formDataToSend, {
+      const response = await axios.post('https://s85-aman-capstone-anndhara-1-8beh.onrender.com/crop/crop', payload, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
         }
       });
@@ -206,6 +209,7 @@ const CropUpload = () => {
         });
         setImage(null);
         setImagePreview(null);
+        setImageDataUrl('');
         
         // Redirect to home page after successful upload
         setTimeout(() => {
