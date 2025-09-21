@@ -1,19 +1,15 @@
 const Crop = require('../model/crop');
 const { handleServerError } = require('../utils/errorHandler');
+const cloudinary = require('../utils/cloudinary');
+
 // http://localhost:9001/crop/crop
 const createCrop = async (req, res) => {
   try {
     console.log('=== CROP UPLOAD DEBUG ===');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
-    console.log('Request file:', req.file ? {
-      fieldname: req.file.fieldname,
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      path: req.file.path
-    } : 'No file');
+    console.log('Request contains base64 image:', !!(req.body.imageBase64 || req.body.imageDataUrl));
     console.log('User:', req.user);
-    
+
     const { name, type, pricePerKg, quantityKg, location } = req.body;
     const seller = req.user.id;
 
@@ -57,28 +53,22 @@ const createCrop = async (req, res) => {
       });
     }
 
-    // Image handling - store ONLY in MongoDB as Base64
-    let imageData = '';
-    let imageContentType = '';
-    
-    if (req.file) {
+    // Image handling - upload to Cloudinary if base64 provided
+    let imageUrl = '';
+    const base64FromBody = req.body.imageBase64 || req.body.imageDataUrl; // support either key
+    if (base64FromBody) {
       try {
-        // Convert image to Base64 for MongoDB storage
-        const fs = require('fs');
-        const imageBuffer = fs.readFileSync(req.file.path);
-        imageData = imageBuffer.toString('base64');
-        imageContentType = req.file.mimetype;
-        
-        console.log('✅ Image stored in MongoDB as Base64:', req.file.filename);
-        
-        // Delete the temporary file since we're storing in MongoDB
-        fs.unlinkSync(req.file.path);
+        const uploadRes = await cloudinary.uploader.upload(base64FromBody, {
+          folder: 'crops',
+          resource_type: 'image',
+        });
+        imageUrl = uploadRes.secure_url;
+        console.log('✅ Image uploaded to Cloudinary:', imageUrl);
       } catch (error) {
-        console.error('Error processing image:', error);
-        // Continue without image if processing fails
+        console.error('Error uploading image to Cloudinary:', error.message || error);
       }
     } else {
-      console.log('No image file provided');
+      console.log('No base64 image provided');
     }
 
     // Create new crop - store ONLY in MongoDB (no imageUrl)
@@ -89,8 +79,7 @@ const createCrop = async (req, res) => {
       quantityKg: parseFloat(quantityKg),
       location: location.trim(),
       seller,
-      imageData,
-      imageContentType,
+      imageUrl,
     });
 
     const savedCrop = await newCrop.save();
@@ -103,136 +92,99 @@ const createCrop = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating crop:', error.message);
-    
-    // Handle multer errors
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: 'File size too large. Maximum size is 5MB.',
-      });
-    }
-    
-    if (error.message === 'Only image files are allowed!') {
-      return res.status(400).json({
-        success: false,
-        message: 'Only image files are allowed.',
-      });
-    }
-    
     return handleServerError(res, error, 'Server error during crop creation');
   }
 };
 
 // http://localhost:9001/crop/AllCrop?cropId=680a726b838f7fd94382044f
 const getCrops = async (req, res) => {
-    try {
-        const cropId = req.query.cropId || req.params.cropId;
-        if (cropId) {
-            const crop = await Crop.findById(cropId).populate('seller', 'username email phone role').exec();
-            if (!crop) {
-                return res.status(404).json({ message: 'Crop not found' });
-            }
-            return res.status(200).json({ message: 'Crop retrieved Successfully', crop });
-        }
-
-        // Get all crops and include Base64 image data for direct display
-        const crops = await Crop.find({ available: true }).populate('seller', 'username email phone role').exec();
-        
-        console.log(`Found ${crops.length} crops`);
-        
-        // Convert image data to data URL for direct display in frontend
-        const cropsWithImages = crops.map(crop => {
-            const cropObj = crop.toObject();
-            console.log(`Processing crop ${cropObj._id}: hasImageData=${!!cropObj.imageData}, imageContentType=${cropObj.imageContentType}`);
-            
-            if (cropObj.imageData && cropObj.imageContentType) {
-                cropObj.imageDataUrl = `data:${cropObj.imageContentType};base64,${cropObj.imageData}`;
-                console.log(`✅ Created imageDataUrl for crop ${cropObj._id}, length: ${cropObj.imageDataUrl.length}`);
-            } else {
-                console.log(`❌ No image data for crop ${cropObj._id}`);
-            }
-            return cropObj;
-        });
-        
-        console.log(`Sending ${cropsWithImages.length} crops with images to frontend`);
-        return res.status(200).json({ success: true, crops: cropsWithImages });
-    } catch (error) {
-        return handleServerError(res, error, 'Server error during fetching crops');
+  try {
+    const cropId = req.query.cropId || req.params.cropId;
+    if (cropId) {
+      const crop = await Crop.findById(cropId).populate('seller', 'username email phone role').exec();
+      if (!crop) {
+        return res.status(404).json({ message: 'Crop not found' });
+      }
+      return res.status(200).json({ message: 'Crop retrieved Successfully', crop });
     }
+
+    // Get all crops
+    const crops = await Crop.find({ available: true }).populate('seller', 'username email phone role').exec();
+    console.log(`Found ${crops.length} crops`);
+    return res.status(200).json({ success: true, crops });
+  } catch (error) {
+    return handleServerError(res, error, 'Server error during fetching crops');
+  }
 };
 
 // GET http://localhost:9001/crop/:id
 const getCropById = async (req, res) => {
   try {
-    const crop = await Crop.findById(req.params.id).populate('seller', 'user email phone role');
+    const crop = await Crop.findById(req.params.id).populate('seller', 'username email phone role');
     if (!crop) {
       return res.status(404).json({ success: false, message: 'Crop not found' });
     }
     res.status(200).json({ success: true, crop });
   } catch (error) {
-    // console.error('Error fetching crop by ID:', error.message);
     return handleServerError(res, error, 'Server error during fetching crop by ID');
   }
 };
 
 // http://localhost:9001/crop/update/680a726b838f7fd94382044f
 const updateCrop = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, type, pricePerKg, quantityKg, imageUrl, location, available } = req.body;
+  try {
+    const { id } = req.params;
+    const { name, type, pricePerKg, quantityKg, imageUrl, location, available, imageBase64, imageDataUrl } = req.body;
 
-        const updateData = {};
-        if (name) updateData.name = name;
-        if (type) updateData.type = type;
-        if (pricePerKg !== undefined) updateData.pricePerKg = pricePerKg;
-        if (quantityKg !== undefined) updateData.quantityKg = quantityKg;
-        if (imageUrl) updateData.imageUrl = imageUrl;
-        if (location) updateData.location = location;
-        if (available !== undefined) updateData.available = available;
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (type) updateData.type = type;
+    if (pricePerKg !== undefined) updateData.pricePerKg = pricePerKg;
+    if (quantityKg !== undefined) updateData.quantityKg = quantityKg;
+    if (imageUrl) updateData.imageUrl = imageUrl;
+    if (location) updateData.location = location;
+    if (available !== undefined) updateData.available = available;
 
-        const updatedCrop = await Crop.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
-        if (!updatedCrop) {
-            return res.status(404).json({ success: false, message: 'Crop not found' });
-        }
-        return res.status(200).json({ success: true, message: 'Crop updated successfully', data: updatedCrop });
-    } catch (error) {
-        return handleServerError(res, error, 'Server error during crop update');
+    // If a new base64 image is provided, upload to Cloudinary and set imageUrl
+    const incomingBase64 = imageBase64 || imageDataUrl;
+    if (incomingBase64) {
+      try {
+        const uploadRes = await cloudinary.uploader.upload(incomingBase64, {
+          folder: 'crops',
+          resource_type: 'image',
+        });
+        updateData.imageUrl = uploadRes.secure_url;
+      } catch (e) {
+        console.error('Cloudinary upload failed in updateCrop:', e.message || e);
+      }
     }
+
+    const updatedCrop = await Crop.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    if (!updatedCrop) {
+      return res.status(404).json({ success: false, message: 'Crop not found' });
+    }
+    return res.status(200).json({ success: true, message: 'Crop updated successfully', data: updatedCrop });
+  } catch (error) {
+    return handleServerError(res, error, 'Server error during crop update');
+  }
 };
 
-// GET /crop/image/:id - Serve image from MongoDB
+// GET /crop/image/:id - Return Cloudinary URL (or redirect)
 const getCropImage = async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`Image request for crop ID: ${id}`);
-    
     const crop = await Crop.findById(id);
-    console.log(`Crop found: ${!!crop}, Has imageData: ${!!(crop && crop.imageData)}`);
-    
     if (!crop) {
-      console.log('Crop not found');
       return res.status(404).json({ success: false, message: 'Crop not found' });
     }
-    
-    if (!crop.imageData) {
-      console.log('No image data for crop');
-      return res.status(404).json({ success: false, message: 'No image data for this crop' });
+    if (!crop.imageUrl) {
+      return res.status(404).json({ success: false, message: 'No image URL for this crop' });
     }
-    
-    // Convert Base64 back to buffer and send as image
-    const imageBuffer = Buffer.from(crop.imageData, 'base64');
-    console.log(`Serving image: ${crop.imageContentType}, size: ${imageBuffer.length} bytes`);
-    
-    // Set CORS headers for image serving
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    res.setHeader('Content-Type', crop.imageContentType || 'image/jpeg');
-    res.setHeader('Content-Length', imageBuffer.length);
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-    
-    res.send(imageBuffer);
+    // Option 1: Redirect to Cloudinary URL
+    return res.redirect(302, crop.imageUrl);
+    // Option 2: Or return JSON with the URL
+    // return res.json({ success: true, url: crop.imageUrl });
   } catch (error) {
     console.error('Error serving image:', error);
     res.status(500).json({ success: false, message: 'Error serving image' });
